@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { RawData, ViewMode } from "./types";
 import dynamic from "next/dynamic";
 import Legend from "./components/Legend";
+import MobileList from "./components/MobileList";
 
 const Treemap = dynamic(() => import("./components/Treemap"), { ssr: false });
 
@@ -29,34 +30,33 @@ export default function Home() {
       });
   }, []);
 
-  const activeMode = MODES.find((m) => m.id === mode)!;
-
   return (
-    /* Desktop: fixed full-viewport, no scroll. Mobile: scrollable page. */
+    /* Desktop: fixed full-viewport. Mobile: normal scrollable page. */
     <div className="flex flex-col bg-[#0a0a0f] text-white md:h-screen md:overflow-hidden">
 
       {/* Header */}
       <header className="flex-shrink-0 px-4 md:px-5 pt-4 md:pt-5 pb-3">
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-sm bg-red-500 flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-xs leading-none">CA</span>
-            </div>
-            <h1 className="text-base md:text-lg font-bold tracking-tight leading-tight">
-              Canadian Job Market
-              <span className="text-white/40 font-normal ml-1.5 text-sm hidden sm:inline">Visualizer</span>
-            </h1>
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-6 h-6 rounded-sm bg-red-500 flex items-center justify-center flex-shrink-0">
+            <span className="text-white font-bold text-xs leading-none">CA</span>
           </div>
+          <h1 className="text-base md:text-lg font-bold tracking-tight">
+            Canadian Job Market
+            <span className="text-white/40 font-normal ml-1.5 text-sm hidden sm:inline">Visualizer</span>
+          </h1>
         </div>
 
-        <p className="text-white/40 text-xs mb-3">
-          {data
-            ? `${data.children.flatMap((g) => g.children).length} occupations · ${(totalJobs / 1e6).toFixed(1)}M jobs · ${activeMode.label}. Tap any tile for details.`
-            : "Loading…"}
-        </p>
+        {data && (
+          <p className="text-white/35 text-xs mb-3">
+            {data.children.flatMap((g) => g.children).length} occupations ·{" "}
+            {(totalJobs / 1e6).toFixed(1)}M jobs
+            <span className="hidden md:inline"> · Hover any tile for details</span>
+            <span className="md:hidden"> · Tap any row to expand</span>
+          </p>
+        )}
 
-        {/* Mode toggle — horizontally scrollable on mobile */}
-        <div className="overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0">
+        {/* Mode toggle — scrollable on mobile */}
+        <div className="overflow-x-auto pb-0.5 -mx-4 px-4 md:mx-0 md:px-0">
           <div className="flex gap-1 bg-white/5 rounded-lg p-1 border border-white/10 w-max md:w-auto">
             {MODES.map((m) => (
               <button
@@ -65,7 +65,7 @@ export default function Home() {
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
                   mode === m.id
                     ? "bg-white text-black shadow-sm"
-                    : "text-white/60 active:bg-white/10 md:hover:text-white md:hover:bg-white/10"
+                    : "text-white/55 active:bg-white/10 md:hover:text-white md:hover:bg-white/10"
                 }`}
               >
                 {m.label}
@@ -80,26 +80,32 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Treemap — fills remaining viewport on desktop, tall fixed height on mobile */}
-      <main className="flex-1 md:min-h-0 px-3 md:px-5 pb-4">
-        <div
-          className="w-full rounded-xl overflow-hidden border border-white/5"
-          style={{ height: "clamp(480px, 160vw, 9999px)" }}
-        >
-          <div className="w-full h-full md:h-full" style={{ height: "inherit" }}>
-            {data ? (
-              <Treemap data={data} mode={mode} />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-white/20 text-sm">
-                Loading…
-              </div>
-            )}
+      {/* ── Mobile: scrollable list ── */}
+      <main className="md:hidden flex-1 px-4 pt-2">
+        {data ? (
+          <MobileList groups={data.children} mode={mode} />
+        ) : (
+          <div className="flex items-center justify-center py-20 text-white/20 text-sm">
+            Loading…
           </div>
+        )}
+      </main>
+
+      {/* ── Desktop: treemap fills remaining space ── */}
+      <main className="hidden md:flex flex-1 min-h-0 px-5 pb-4">
+        <div className="w-full h-full rounded-xl overflow-hidden border border-white/5">
+          {data ? (
+            <Treemap data={data} mode={mode} />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-white/20 text-sm">
+              Loading…
+            </div>
+          )}
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="flex-shrink-0 px-4 md:px-5 pb-4 md:pb-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-white/20">
+      <footer className="flex-shrink-0 px-4 md:px-5 pb-4 md:pb-3 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-white/20">
         <span>Data: Statistics Canada NOC 2021 · Labour Force Survey 2023</span>
         <span className="hidden md:inline">·</span>
         <span>AI scores generated by Claude · For research purposes only</span>
