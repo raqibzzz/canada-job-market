@@ -9,9 +9,10 @@ interface Props {
   group: string | null;
   x: number;
   y: number;
+  onDismiss?: () => void;
 }
 
-export default function Tooltip({ occupation, group, x, y }: Props) {
+export default function Tooltip({ occupation, group, x, y, onDismiss }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: x + 16, top: y - 8 });
 
@@ -41,46 +42,62 @@ export default function Tooltip({ occupation, group, x, y }: Props) {
     score >= 8 ? "#ef4444" : score >= 6 ? "#f97316" : score >= 4 ? "#eab308" : "#22c55e";
 
   return (
-    <div
-      ref={ref}
-      className="fixed z-50 pointer-events-none"
-      style={{ left: pos.left, top: pos.top }}
-    >
+    <>
+      {/* Tap-to-dismiss backdrop on mobile */}
+      {onDismiss && (
+        <div
+          className="fixed inset-0 z-40 md:hidden"
+          onTouchStart={onDismiss}
+        />
+      )}
+
       <div
-        className="rounded-lg shadow-2xl border border-white/10 text-sm"
-        style={{
-          background: "rgba(15,15,20,0.97)",
-          backdropFilter: "blur(8px)",
-          maxWidth: 320,
-        }}
+        ref={ref}
+        className="fixed z-50 pointer-events-none"
+        style={{ left: pos.left, top: pos.top }}
       >
-        <div className="px-4 pt-3 pb-2 border-b border-white/10">
-          <div className="text-xs text-white/40 uppercase tracking-wider mb-0.5">{group}</div>
-          <div className="font-semibold text-white text-base leading-tight">{occupation.name}</div>
-          <div className="text-xs text-white/40 mt-0.5">NOC {occupation.noc_code}</div>
-        </div>
-
-        <div className="px-4 py-3 grid grid-cols-2 gap-x-6 gap-y-2">
-          <Stat label="Employed" value={formatEmployment(occupation.employment)} />
-          <Stat label="Median Wage" value={formatWage(occupation.median_wage)} />
-          <Stat label="Job Growth" value={growthLabel(occupation.growth)} />
-          <Stat label="Education" value={educationLabel(occupation.education)} />
-        </div>
-
-        <div className="px-4 pb-3">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-white/50 text-xs uppercase tracking-wider">AI Exposure</span>
-            <span
-              className="text-xs font-bold px-1.5 py-0.5 rounded"
-              style={{ background: scoreColor + "30", color: scoreColor }}
-            >
-              {score}/10
-            </span>
+        <div
+          className="rounded-lg shadow-2xl border border-white/10 text-sm"
+          style={{
+            background: "rgba(15,15,20,0.97)",
+            backdropFilter: "blur(8px)",
+            maxWidth: "min(320px, calc(100vw - 16px))",
+          }}
+        >
+          <div className="px-4 pt-3 pb-2 border-b border-white/10">
+            <div className="text-xs text-white/40 uppercase tracking-wider mb-0.5">{group}</div>
+            <div className="font-semibold text-white text-base leading-tight">{occupation.name}</div>
+            <div className="text-xs text-white/40 mt-0.5">NOC {occupation.noc_code}</div>
           </div>
-          <p className="text-white/70 text-xs leading-relaxed">{occupation.ai_rationale}</p>
+
+          <div className="px-4 py-3 grid grid-cols-2 gap-x-6 gap-y-2">
+            <Stat label="Employed" value={formatEmployment(occupation.employment)} />
+            <Stat label="Median Wage" value={formatWage(occupation.median_wage)} />
+            <Stat label="Job Growth" value={growthLabel(occupation.growth)} />
+            <Stat label="Education" value={educationLabel(occupation.education)} />
+          </div>
+
+          <div className="px-4 pb-3">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-white/50 text-xs uppercase tracking-wider">AI Exposure</span>
+              <span
+                className="text-xs font-bold px-1.5 py-0.5 rounded"
+                style={{ background: scoreColor + "30", color: scoreColor }}
+              >
+                {score}/10
+              </span>
+            </div>
+            <p className="text-white/70 text-xs leading-relaxed">{occupation.ai_rationale}</p>
+          </div>
+
+          {onDismiss && (
+            <div className="md:hidden px-4 pb-3">
+              <div className="text-white/25 text-xs text-center">tap anywhere to dismiss</div>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

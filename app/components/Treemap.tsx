@@ -102,6 +102,15 @@ export default function Treemap({ data, mode }: Props) {
 
   const onMouseLeave = useCallback(() => setHovered(null), []);
 
+  const onTouchStart = useCallback((e: React.TouchEvent, occ: Occupation, group: string) => {
+    const t = e.touches[0];
+    setHovered((prev) =>
+      prev?.occupation.noc_code === occ.noc_code
+        ? null
+        : { occupation: occ, group, x: t.clientX, y: t.clientY }
+    );
+  }, []);
+
   return (
     <div ref={containerRef} className="relative w-full h-full select-none">
       <svg width={dims.width} height={dims.height} className="absolute inset-0">
@@ -152,6 +161,7 @@ export default function Treemap({ data, mode }: Props) {
                 style={{ cursor: "default", transition: "fill-opacity 0.1s" }}
                 onMouseMove={(e) => onMouseMove(e, cell.occupation, cell.group)}
                 onMouseLeave={onMouseLeave}
+                onTouchStart={(e) => onTouchStart(e, cell.occupation, cell.group)}
               />
               {w > 60 && h > 28 && (
                 <text
@@ -189,6 +199,7 @@ export default function Treemap({ data, mode }: Props) {
           group={hovered.group}
           x={hovered.x}
           y={hovered.y}
+          onDismiss={() => setHovered(null)}
         />
       )}
     </div>
