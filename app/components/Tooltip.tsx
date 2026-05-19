@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { Occupation } from "../types";
 import { educationLabel, formatEmployment, formatWage, growthLabel } from "../utils";
 
@@ -11,6 +12,28 @@ interface Props {
 }
 
 export default function Tooltip({ occupation, group, x, y }: Props) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ left: x + 16, top: y - 8 });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const { width, height } = el.getBoundingClientRect();
+    const pad = 8;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    let left = x + 16;
+    let top = y - 8;
+
+    if (left + width > vw - pad) left = x - width - 16;
+    if (left < pad) left = pad;
+    if (top + height > vh - pad) top = vh - height - pad;
+    if (top < pad) top = pad;
+
+    setPos({ left, top });
+  }, [x, y]);
+
   if (!occupation) return null;
 
   const score = occupation.ai_score;
@@ -19,8 +42,9 @@ export default function Tooltip({ occupation, group, x, y }: Props) {
 
   return (
     <div
+      ref={ref}
       className="fixed z-50 pointer-events-none"
-      style={{ left: x + 16, top: y - 8 }}
+      style={{ left: pos.left, top: pos.top }}
     >
       <div
         className="rounded-lg shadow-2xl border border-white/10 text-sm"
@@ -28,7 +52,6 @@ export default function Tooltip({ occupation, group, x, y }: Props) {
           background: "rgba(15,15,20,0.97)",
           backdropFilter: "blur(8px)",
           maxWidth: 320,
-          transform: x > window.innerWidth - 360 ? "translateX(calc(-100% - 32px))" : undefined,
         }}
       >
         <div className="px-4 pt-3 pb-2 border-b border-white/10">
