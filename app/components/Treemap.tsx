@@ -45,8 +45,8 @@ export default function Treemap({ data, mode }: Props) {
     return () => obs.disconnect();
   }, []);
 
-  const cells = useMemo<Cell[]>(() => {
-    if (!dims.width || !dims.height) return [];
+  const layout = useMemo(() => {
+    if (!dims.width || !dims.height) return { cells: [], groupLabels: [] };
 
     const hierarchy = d3
       .hierarchy<RawData | OccupationGroup | Occupation>(data as RawData, (d) => {
@@ -66,13 +66,13 @@ export default function Treemap({ data, mode }: Props) {
 
     const root = treemap(hierarchy) as HierarchyRectangularNode<RawData | OccupationGroup | Occupation>;
 
-    const result: Cell[] = [];
+    const cells: Cell[] = [];
     root.leaves().forEach((leaf) => {
       const occ = leaf.data as Occupation;
       const groupNode = leaf.parent;
       if (!groupNode) return;
       const group = (groupNode.data as OccupationGroup).name;
-      result.push({
+      cells.push({
         x0: leaf.x0,
         y0: leaf.y0,
         x1: leaf.x1,
@@ -83,37 +83,18 @@ export default function Treemap({ data, mode }: Props) {
       });
     });
 
-    return result;
-  }, [data, dims, mode]);
-
-  const groupLabels = useMemo(() => {
-    if (!dims.width || !dims.height) return [];
-
-    const hierarchy = d3
-      .hierarchy<RawData | OccupationGroup | Occupation>(data as RawData, (d) => {
-        if ("children" in d && Array.isArray(d.children)) return d.children as (OccupationGroup | Occupation)[];
-        return null;
-      })
-      .sum((d) => ("employment" in d ? (d as Occupation).employment : 0));
-
-    const treemap = d3
-      .treemap<RawData | OccupationGroup | Occupation>()
-      .size([dims.width, dims.height])
-      .paddingOuter(4)
-      .paddingInner(2)
-      .paddingTop(20)
-      .round(true);
-
-    const root = treemap(hierarchy) as HierarchyRectangularNode<RawData | OccupationGroup | Occupation>;
-
-    return root.children?.map((group) => ({
+    const groupLabels = root.children?.map((group) => ({
       name: (group.data as OccupationGroup).name,
       x0: group.x0,
       y0: group.y0,
       x1: group.x1,
       y1: group.y1,
     })) ?? [];
-  }, [data, dims]);
+
+    return { cells, groupLabels };
+  }, [data, dims, mode]);
+
+  const { cells, groupLabels } = layout;
 
   const onMouseMove = useCallback((e: React.MouseEvent, occ: Occupation, group: string) => {
     setHovered({ occupation: occ, group, x: e.clientX, y: e.clientY });
