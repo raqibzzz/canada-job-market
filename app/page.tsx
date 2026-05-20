@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { RawData, ViewMode } from "./types";
 import dynamic from "next/dynamic";
 import Legend from "./components/Legend";
-import MobileBubbles from "./components/MobileBubbles";
+import MobileTreemap from "./components/MobileTreemap";
 
 const Treemap = dynamic(() => import("./components/Treemap"), { ssr: false });
 
@@ -51,7 +51,7 @@ export default function Home() {
             {data.children.flatMap((g) => g.children).length} occupations ·{" "}
             {(totalJobs / 1e6).toFixed(1)}M jobs
             <span className="hidden md:inline"> · Hover any tile for details</span>
-            <span className="md:hidden"> · Tap any bubble for details</span>
+            <span className="md:hidden"> · Tap a sector to zoom in</span>
           </p>
         )}
 
@@ -80,10 +80,10 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── Mobile: bubble chart ── */}
+      {/* ── Mobile: zoomable treemap ── */}
       <main className="md:hidden flex-1 px-3 pt-1">
         {data ? (
-          <MobileBubbles data={data} mode={mode} />
+          <MobileTreemap data={data} mode={mode} />
         ) : (
           <div className="flex items-center justify-center py-20 text-white/20 text-sm">
             Loading…
